@@ -1,13 +1,14 @@
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+# __feature__ : python2系の挙動をpython3系に変更するモジュール
+# https://qiita.com/amedama/items/5e5a09b3a88dfd48198e
+from __future__ import absolute_import, division, print_function
 
-import pandas as pd
 import os
-import numpy as np
-from tqdm import tqdm
-import scipy.io.wavfile
 import time
+
+import numpy as np
+import pandas as pd
+import scipy.io.wavfile
+from tqdm import tqdm
 
 """
 $ python preprocessing_T2.py --root D:\codes\dataset 
@@ -72,6 +73,10 @@ class AudioProcessing():
 if __name__ == "__main__":
 
     import argparse
+    """
+    argparseの説明 : pythonでコマンド引数を取るときに用いる
+    https://qiita.com/kzkadc/items/e4fc7bc9c003de1eb6d0
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', type = str, default='./data')
     parser.add_argument('--ratio_step', type =float, default=0.25)
@@ -101,9 +106,26 @@ if __name__ == "__main__":
         start_time =  df.iat[fileidx, 9]
         end_time = df.iat[fileidx, 10]
         filling_type = df.iat[fileidx, 4]
-        
+
+        """
+        pandas : df.iatの説明
+        https://note.nkmk.me/python-pandas-at-iat-loc-iloc/
+        """
+
+        # print("file_name : ", file_name)
         audio_filename = file_name.rsplit("_", 1)[0] + '_audio.wav'
+        
+        """
+        python : rsplitの説明
+        https://note.nkmk.me/python-split-rsplit-splitlines-re/
+        """
+        
+        # print("audio_filename: ", audio_filename)
         audio_path = os.path.join(root_pth, str(folder_num), 'audio', audio_filename)
+        # 337番目の音声データは飛ばす
+        if audio_path == "./data/8/audio/s1_fi2_fu2_b1_l0_audio.wav" :
+            continue
+        # print("audio_path : ", audio_path)
         sample_rate, signal = scipy.io.wavfile.read(audio_path)
         
         ap = AudioProcessing(sample_rate,signal,nfilt=save_size)
