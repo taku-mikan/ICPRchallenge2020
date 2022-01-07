@@ -14,3 +14,5 @@ __pycache__/
 # Visual Studio 2015/2017 cache/options directory
 .vs/
 
+# Mac用
+.DS_Store
