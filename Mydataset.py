@@ -1,30 +1,46 @@
 
-import numpy as np
 import os
+import random
+
+import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import Dataset, DataLoader
-
-import random
+from torch.utils.data import DataLoader, Dataset
 
 """setup"""
 random.seed(123)
 np.random.seed(123)
 torch.manual_seed(123)
 torch.backends.cudnn.deterministic = True
+"""
+--> pytorch : CNNのlossが毎回変わることを防ぐ == 決定論的な振る舞いを指定
+https://qiita.com/chat-flip/items/c2e983b7f30ef10b91f6
+"""
 torch.backends.cudnn.benchmark = False
+"""
+--> これは何(公式サイトは以下)
+https://pytorch.org/docs/stable/backends.html
+"""
 
 class MyDataset(torch.utils.data.Dataset):
     def __init__(self,root_pth,test=False,transform = None):
+        # クラス数
         class_num=4
+        # 各データへのpathの設定
         self.audio_pth = os.path.join(root_pth, 'audio', 'mfcc')
         filling_type = np.load(os.path.join(root_pth, 'audio', 'filling_type.npy'))
         pouring_or_shaking = np.load(os.path.join(root_pth,  'audio', 'pouring_or_shaking.npy'))
+
+        # 各種設定　<-- 何この変数
         self.label = filling_type * pouring_or_shaking
         self.is_test=test
         self.each_class_size = []
+
+        # 各クラスに属するデータ数を保存
         for i in range(class_num):
             self.each_class_size.append(np.count_nonzero(self.label==i))
+ 
+        # ここは何をやってるんだ
         mx=0
         mn=1000
         for idx in range(self.label.shape[0]):
@@ -42,6 +58,9 @@ class MyDataset(torch.utils.data.Dataset):
         return self.label.shape[0]
     
     def __getitem__(self, idx):
+        """
+        この関数も何やってるの
+        """
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
