@@ -104,6 +104,10 @@ if __name__ == "__main__":
         
         audio_filename = file_name.rsplit("_", 1)[0] + '_audio.wav'
         audio_path = os.path.join(root_pth, str(folder_num), 'audio', audio_filename)
+
+        if audio_path == "./data/8/audio/s1_fi2_fu2_b1_l0_audio.wav":
+            continue
+        
         sample_rate, signal = scipy.io.wavfile.read(audio_path)
         
         ap = AudioProcessing(sample_rate,signal,nfilt=save_size)
