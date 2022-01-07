@@ -1,4 +1,8 @@
 data/
+train/
+file_num.ipynb
+corsmal_data.csv
+audio_sample.ipynb
 submission.csv
 models/
 models.zip
