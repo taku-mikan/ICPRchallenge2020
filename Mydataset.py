@@ -22,7 +22,6 @@ class MyDataset(torch.utils.data.Dataset):
     def __init__(self,root_pth,test=False,transform = None):
         # クラス数
         class_num=4
-
         # 各データへのpathの設定
         self.audio_pth = os.path.join(root_pth, 'audio', 'mfcc')
         filling_type = np.load(os.path.join(root_pth, 'audio', 'filling_type.npy'))
