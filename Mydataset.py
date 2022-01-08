@@ -1,4 +1,3 @@
-
 import os
 import random
 
@@ -8,24 +7,22 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 
 """setup"""
-random.seed(123)
-np.random.seed(123)
-torch.manual_seed(123)
+random.seed(0)
+np.random.seed(0)
+torch.manual_seed(0)
 torch.backends.cudnn.deterministic = True
-"""
---> pytorch : CNNのlossが毎回変わることを防ぐ == 決定論的な振る舞いを指定
-https://qiita.com/chat-flip/items/c2e983b7f30ef10b91f6
-"""
+# --> pytorch : CNNのlossが毎回変わることを防ぐ == 決定論的な振る舞いを指定
+# https://qiita.com/chat-flip/items/c2e983b7f30ef10b91f6
+
 torch.backends.cudnn.benchmark = False
-"""
---> これは何(公式サイトは以下)
-https://pytorch.org/docs/stable/backends.html
-"""
+# --> これは何(公式サイトは以下)
+# https://pytorch.org/docs/stable/backends.html
 
 class MyDataset(torch.utils.data.Dataset):
     def __init__(self,root_pth,test=False,transform = None):
         # クラス数
         class_num=4
+
         # 各データへのpathの設定
         self.audio_pth = os.path.join(root_pth, 'audio', 'mfcc')
         filling_type = np.load(os.path.join(root_pth, 'audio', 'filling_type.npy'))
@@ -33,7 +30,7 @@ class MyDataset(torch.utils.data.Dataset):
 
         # 各種設定　<-- 何この変数
         self.label = filling_type * pouring_or_shaking
-        self.is_test=test
+        self.is_test = test
         self.each_class_size = []
 
         # 各クラスに属するデータ数を保存
@@ -173,17 +170,18 @@ if __name__=="__main__":
     root_pth = args.root
 
     mydataset = MyDataset(root_pth)
+    
     data, lbl = mydataset[150]
     print(mydataset.mn, ' ', mydataset.mx)
     
     #mydataset=MyDataset(root_pth)
     mylstmdataset = MyLSTMDataset(root_pth)
     data, lbl = mylstmdataset[150]
-    print(data, ' ', lbl)
-    print(torch.max(data))
-    print(torch.min(data))
-    print(mylstmdataset.mn, ' ', mylstmdataset.mx)
-    print(mylstmdataset.get_each_class_avg_len())
+    # print(data, ' ', lbl)
+    # print(torch.max(data))
+    # print(torch.min(data))
+    # print(mylstmdataset.mn, ' ', mylstmdataset.mx)
+    # print(mylstmdataset.get_each_class_avg_len())
 
     """
     -313.07119549054045   194.19187653405487

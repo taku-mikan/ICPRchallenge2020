@@ -1,24 +1,20 @@
+from __future__ import absolute_import, division, print_function
 
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+import os
+import pdb
+import random
+
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.autograd import Variable
+from torch.utils.data.dataset import Subset
+from tqdm import tqdm
 
 from model import Net
 from Mydataset import MyDataset
-
-import os
-from tqdm import tqdm
-import matplotlib.pyplot as plt
-import numpy as np
-import pdb
-
-import torch
-import torch.optim as optim
-import torch.nn as nn
-from torch.autograd import Variable
-from torch.utils.data.dataset import Subset
-import random
-
 
 """setup"""
 random.seed(0)
@@ -28,6 +24,12 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 def loss_function(output, target, inv_E, loss_type = 'CE', reduction = 'sum', gamma=2,):
+    """
+    損失関数を求める関数
+    "CE" : CrossEntropy , "FL" : focal loss
+    focal loss :  不均衡なデータセットの際の損失関数↓Quiitaの記事(CEに(1-p)^γかける)
+    https://qiita.com/tancoro/items/c58cbb33ee1b5971ee3b
+    """
     
     loss = None
     eps = 1e-7
@@ -42,7 +44,7 @@ def loss_function(output, target, inv_E, loss_type = 'CE', reduction = 'sum', ga
         m = torch.nn.Sigmoid()
         output = m(output)
         output = torch.clamp(output, eps, 1-eps)
-        loss = (1-output)**gamma * torch.log(output)
+        loss = (1-output)**gamma * torch.log(output) # output=p, gammma=γ
 
         loss = -1 * target.float() * inv_E.float() * loss
         if reduction == 'sum':
@@ -81,19 +83,21 @@ if __name__ == "__main__":
                         choices=[-1,1,2,3,4,5,6,7,8,9],
                         help = 'which train folder is used as validation (not trained) [default: -1]')
     args = parser.parse_args()
+
     print("Loading data...")
     CLASS_NUM = 4
     CHANNEL_NUM = 8
     
     use_cuda = torch.cuda.is_available()
     root_dir = args.root
-    results_dir = os.path.join(root_dir, 'T2_results')
+    results_dir = os.path.join(root_dir, 'T2_results') # 結果を保存するフォルダpath
     os.makedirs(results_dir,exist_ok=True)
     
-    train_indices = []
-    val_indices = []
+    train_indices = [] # 学習データのindex
+    val_indices = [] # validationデータのindex
+
     mydataset = MyDataset(root_pth=root_dir, test=False)
-    n_samples = len(mydataset)
+    n_samples = len(mydataset) # サンプル(データ)数
     folder_count = np.load(os.path.join(root_dir, 'audio', 'folder_count.npy')).tolist()
     
     if args.train_type == 'part' and args.val != -1:
@@ -109,6 +113,9 @@ if __name__ == "__main__":
         train_indices = list(range(0, n_samples))  
         val_indices = (np.random.choice(train_indices, 1000, replace=False)).tolist()
     
+    # torch.utils.data.Subset : train-validation(==データ)を分割する役割
+    # Subset(dataset, indices)で分割可能 ↓Quiitaの記事
+    # https://qiita.com/takurooo/items/ba8c509eaab080e2752c
     train_dataset = Subset(mydataset, train_indices)
     val_dataset =  Subset(mydataset, val_indices)
     
@@ -120,10 +127,12 @@ if __name__ == "__main__":
                                                  batch_size=args.batch_size, 
                                                  shuffle=True)
     
-    model     = Net()
+    model     = Net() #CNNのモデル
     optimizer = optim.Adam(model.parameters(), lr=args.lr,  weight_decay=1e-5)
+
     if use_cuda:
         model.cuda()
+
     train_loss_list = []
     val_loss_list   = []
     train_size  = len(train_dataset)
@@ -131,7 +140,9 @@ if __name__ == "__main__":
     each_class_size = torch.tensor(each_class_size,dtype=torch.float)
     if use_cuda:
         each_class_size = each_class_size.cuda()
+
     inv_E = log_inverse_class_frequency(each_class_size, train_size)
+    
     def train(epoch):
         model.train()
         loss_train = 0.0
