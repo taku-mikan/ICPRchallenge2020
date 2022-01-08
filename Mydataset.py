@@ -32,7 +32,7 @@ class MyDataset(torch.utils.data.Dataset):
         self.label = filling_type * pouring_or_shaking
 
         self.is_test = test # testセットかどうかの保存変数
-        self.each_class_size = []
+        self.each_class_size = [] # それぞれのクラスに属するデータの数
 
         # 各クラスに属するデータ数を保存
         for i in range(class_num):
@@ -54,11 +54,13 @@ class MyDataset(torch.utils.data.Dataset):
         self.mx=mx
             
     def __len__(self):
+        # self.label.shape = (31769, )
         return self.label.shape[0]
     
     def __getitem__(self, idx):
         """
-        この関数も何やってるの
+        index(idx)を受け取り、学習(self.is_test=False)ならlabelと一緒に,
+        testセットならdataだけ(labelは-1)を返す
         """
         if torch.is_tensor(idx):
             idx = idx.tolist()
@@ -179,11 +181,11 @@ if __name__=="__main__":
     #mydataset=MyDataset(root_pth)
     mylstmdataset = MyLSTMDataset(root_pth)
     data, lbl = mylstmdataset[150]
-    # print(data, ' ', lbl)
-    # print(torch.max(data))
-    # print(torch.min(data))
-    # print(mylstmdataset.mn, ' ', mylstmdataset.mx)
-    # print(mylstmdataset.get_each_class_avg_len())
+    print(data, ' ', lbl)
+    print(torch.max(data))
+    print(torch.min(data))
+    print(mylstmdataset.mn, ' ', mylstmdataset.mx)
+    print(mylstmdataset.get_each_class_avg_len())
 
     """
     -313.07119549054045   194.19187653405487

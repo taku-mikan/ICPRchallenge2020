@@ -1,22 +1,20 @@
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
 
-from model import Net
-from AudioProcessing import AudioProcessing
+import csv
+import os
+import pdb
+import random
+import time
+from glob import glob
 
 import numpy as np
-import scipy.io.wavfile
-import os
-from tqdm import tqdm
 import pandas as pd
-from glob import glob
-import csv
-import pdb
-
+import scipy.io.wavfile
 import torch
-import time
-import random
+from tqdm import tqdm
+
+from AudioProcessing import AudioProcessing
+from model import Net
 
 """
 $ python preprocessing_T1.py --root D:\codes\dataset 
@@ -65,7 +63,6 @@ if __name__ == "__main__":
     
     start = time.time()
 
-    
     use_cuda = torch.cuda.is_available()
     root_dir = args.root
     results_dir = os.path.join(root_dir, 'T2_results')
@@ -79,6 +76,7 @@ if __name__ == "__main__":
     T2_pred_dir = os.path.join(root_dir, 'T2_pred')
     os.makedirs(T2_mid_dir,exist_ok=True)
     os.makedirs(T2_pred_dir,exist_ok=True)
+
     fol_count = 0
     mov_count = [0]*9
     for folder_num in range (1,10):
@@ -100,18 +98,23 @@ if __name__ == "__main__":
                 tmp_mfcc=tmp_mfcc.transpose(2,0,1)
                 audio=torch.from_numpy(tmp_mfcc.astype(np.float32))
                 audio=torch.unsqueeze(audio, 0)
+
                 if use_cuda:
-                    audio = audio.cuda()   
-                output, pred=model.before_lstm(audio)
-                _,pred=torch.max(pred,1)
+                    audio = audio.cuda()
+
+                output, pred = model.before_lstm(audio)
+                _,pred = torch.max(pred,1)
                 datalist.append(output.to('cpu').detach().numpy().copy())
                 predlist.append(pred.item())
+    
             fol_count +=1
             datalist = np.squeeze(np.array(datalist))
             predlist = np.squeeze(np.array(predlist))
             mov_count[folder_num-1] += 1
+
             np.save(os.path.join(T2_mid_dir, "{0:06d}".format(fol_count)), datalist)
             np.save(os.path.join(T2_pred_dir, "{0:06d}".format(fol_count)), predlist)
+
     np.save(os.path.join(root_dir, 'mov_count'), np.array(mov_count))
 
     elapsed_time = time.time() - start
