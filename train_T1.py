@@ -17,9 +17,9 @@ from model import LSTMNet
 from Mydataset import MyLSTMDataset
 
 """setup"""
-random.seed(123)
-np.random.seed(123)
-torch.manual_seed(123)
+random.seed(0)
+np.random.seed(0)
+torch.manual_seed()
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
