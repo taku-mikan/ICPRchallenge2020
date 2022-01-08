@@ -1,23 +1,20 @@
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
+
+import os
+import pdb
+import random
+
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.autograd import Variable
+from torch.utils.data.dataset import Subset
+from tqdm import tqdm
 
 from model import LSTMNet
 from Mydataset import MyLSTMDataset
-
-import os
-from tqdm import tqdm
-import matplotlib.pyplot as plt
-import numpy as np
-import pdb
-
-import torch
-import torch.optim as optim
-import torch.nn as nn
-from torch.autograd import Variable
-from torch.utils.data.dataset import Subset
-import random
-
 
 """setup"""
 random.seed(123)
@@ -27,6 +24,10 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 def loss_function(output, target, inv_E, loss_type = 'CE', reduction = 'sum', gamma=2,num_classes=3):
+    """
+    損失関数を指定する関数
+    "CE" : CrossEntropy, "FL" : focal loss -> 詳細はtrain_T2.py
+    """
     
     loss = None
     eps = 1e-7
@@ -80,13 +81,17 @@ if __name__ == "__main__":
                         choices=[-1,1,2,3,4,5,6,7,8,9],
                         help = 'which train folder is used as validation (not trained) [default: -1]')
     args = parser.parse_args()
+
     print("Loading data...")
+
+    # モデルのハイぱパラメータの設定
     INPUT_DIM   = 1024
     CLASS_NUM   = 3
     HIDDEN_DIM  = 256
     N_LAYERS    = 3
     DROP_PROB   = 0.2
     
+    # folder関連　: 結果は./data/T1_results
     use_cuda = torch.cuda.is_available()
     root_dir = args.root
     results_dir = os.path.join(root_dir, 'T1_results')
@@ -97,22 +102,43 @@ if __name__ == "__main__":
     mydataset = MyLSTMDataset(root_pth=root_dir, test=False, padding_size = 100)
     n_samples = len(mydataset)
     folder_count = np.load(os.path.join(root_dir, 'mov_count.npy')).tolist()
-    if args.train_type == 'part' and args.val != -1:
-        l = list(range(0, n_samples))
+
+    # 去年のtrainデータとvalidationデータの分割
+    # if args.train_type == 'part' and args.val != -1:
+    #     l = list(range(0, n_samples))
+    #     total_num = 0
+    #     for i, num in enumerate(folder_count):
+    #         if i != args.val-1:
+    #             train_indices += l[total_num:total_num+num]
+    #         else:
+    #             val_indices += l[total_num:total_num+num]
+    #         total_num += num
+    # else:
+    #     train_indices = list(range(0, n_samples))  
+    #     val_indices = (np.random.choice(train_indices, 100, replace=False)).tolist()
+
+    # 自作データの分割コード : train:validation=80:20
+    if args.train_type == "part" :
         total_num = 0
-        for i, num in enumerate(folder_count):
-            if i != args.val-1:
-                train_indices += l[total_num:total_num+num]
-            else:
-                val_indices += l[total_num:total_num+num]
+        for num in folder_count:
+            # folder_count : [6134, 4534, 4386, 3994, 4342, 5382, 1100, 1001, 923]
+            fol_indices = list(range(total_num, total_num+num))
+            fol_indices = random.sample(fol_indices, num)
+            # train : validation = 80 : 20
+            train_size = int(num * 0.8)
+
+            train_indices += fol_indices[0:train_size]
+            val_indices += fol_indices[train_size:]
+
             total_num += num
     else:
-        train_indices = list(range(0, n_samples))  
-        val_indices = (np.random.choice(train_indices, 100, replace=False)).tolist()
+        train_indices = list(range(0, n_samples))
+        val_indices = (np.random.choice(train_indices, 1000, replace=False)).tolist()
     
     train_dataset = Subset(mydataset, train_indices)
     val_dataset =  Subset(mydataset, val_indices)
     
+    # pytorchのmodelに入力するための変換
     train_loader   = torch.utils.data.DataLoader(train_dataset,
                                                  batch_size=args.batch_size, 
                                                  shuffle=True,
@@ -122,6 +148,7 @@ if __name__ == "__main__":
                                                  shuffle=False,
                                                  drop_last = True)
     
+    # modelの定義
     model     = LSTMNet(is_cuda=use_cuda, 
                         input_dim=INPUT_DIM, 
                         output_dim=CLASS_NUM, 
@@ -129,16 +156,22 @@ if __name__ == "__main__":
                         n_layers=N_LAYERS,
                         drop_prob=DROP_PROB)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    
     if use_cuda:
         model.cuda()
+
     train_loss_list = []
     val_loss_list   = []
     train_size  = len(train_dataset)
     each_class_size = mydataset.get_each_class_size()
     each_class_size = torch.tensor(each_class_size,dtype=torch.float)
+    
     if use_cuda:
         each_class_size = each_class_size.cuda()
+
     inv_E = log_inverse_class_frequency(each_class_size, train_size)
+
+    
     def train(epoch):
         model.train()
         loss_train = 0.0

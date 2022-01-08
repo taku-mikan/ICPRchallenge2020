@@ -25,7 +25,7 @@ torch.backends.cudnn.benchmark = False
 
 def loss_function(output, target, inv_E, loss_type = 'CE', reduction = 'sum', gamma=2,):
     """
-    損失関数を求める関数
+    損失関数を設定する関数
     "CE" : CrossEntropy , "FL" : focal loss
     focal loss :  不均衡なデータセットの際の損失関数↓Quiitaの記事(CEに(1-p)^γかける)
     https://qiita.com/tancoro/items/c58cbb33ee1b5971ee3b
@@ -97,20 +97,41 @@ if __name__ == "__main__":
     val_indices = [] # validationデータのindex
 
     mydataset = MyDataset(root_pth=root_dir, test=False)
-    n_samples = len(mydataset) # サンプル(データ)数
+    n_samples = len(mydataset) # サンプル(データ)数 -> 31769
     folder_count = np.load(os.path.join(root_dir, 'audio', 'folder_count.npy')).tolist()
     
-    if args.train_type == 'part' and args.val != -1:
-        l = list(range(0, n_samples))
+    # 以下trainデータとvalidationデータ分割するコード(今年はここを変更かな？？)
+    # if args.train_type == 'part' and args.val != -1:
+    #     l = list(range(0, n_samples)) # [0,1,2,3,...,31767, 31768]
+    #     total_num = 0
+    #     for i, num in enumerate(folder_count):
+    #         # i=(container id) -1の値,  
+    #         # folder_count : [6134, 4534, 4386, 3994, 4342, 5382, 1100, 1001, 923]
+    #         if i != args.val-1:
+    #             train_indices += l[total_num:total_num+num]
+    #         else:
+    #             val_indices += l[total_num:total_num+num]
+    #         total_num += num
+    # else:
+    #      train_indices = list(range(0, n_samples))  
+    #      val_indices = (np.random.choice(train_indices, 1000, replace=False)).tolist()
+
+    # 自分でかいた部分 : trainとvalidationの分割
+    if args.train_type == "part" :
         total_num = 0
-        for i, num in enumerate(folder_count):
-            if i != args.val-1:
-                train_indices += l[total_num:total_num+num]
-            else:
-                val_indices += l[total_num:total_num+num]
+        for num in folder_count:
+            # folder_count : [6134, 4534, 4386, 3994, 4342, 5382, 1100, 1001, 923]
+            fol_indices = list(range(total_num, total_num+num))
+            fol_indices = random.sample(fol_indices, num)
+            # train : validation = 80 : 20
+            train_size = int(num * 0.8)
+
+            train_indices += fol_indices[0:train_size]
+            val_indices += fol_indices[train_size:]
+
             total_num += num
     else:
-        train_indices = list(range(0, n_samples))  
+        train_indices = list(range(0, n_samples))
         val_indices = (np.random.choice(train_indices, 1000, replace=False)).tolist()
     
     # torch.utils.data.Subset : train-validation(==データ)を分割する役割
@@ -179,8 +200,6 @@ if __name__ == "__main__":
                 audio = Variable(audio)
                 target = Variable(target)
 
-                
-
                 outputs = model(audio)
                 _,preds=torch.max(outputs,1)
             
@@ -191,6 +210,7 @@ if __name__ == "__main__":
             
           
         print("Test Epoch {}/{} Loss:{:.4f} Acc:{:.4f}%".format(epoch,args.epochs,loss_test/len(val_loader),correct_test/len(val_loader)/args.batch_size*100))
+
     print("============================================================")  
     print('use_cuda: ',     use_cuda)
     
