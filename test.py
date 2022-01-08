@@ -1,38 +1,49 @@
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
 
-from model import Net, LSTMNet
-from AudioProcessing import AudioProcessing
-from Mydataset import Padding
-from utils_t3 import *
-
-import numpy as np
-import scipy.io.wavfile
-import os
-from tqdm import tqdm
-import pandas as pd
-from glob import glob
 import csv
+import os
 import pdb
 import pickle
-
-import torch
-import time
 import random
+import time
+from glob import glob
+
+import numpy as np
+import pandas as pd
+import scipy.io.wavfile
+import torch
+from tqdm import tqdm
+
+from AudioProcessing import AudioProcessing
+from model import LSTMNet, Net
+from Mydataset import Padding
+from utils_t3 import *
 
 """
 $ python test.py --root D:\codes\dataset --folder_num 13 14 15
 """
 
 def load_checkpoint_T2(file_path, use_cuda=False):
+    """
+    train_T2.pyで保存した重みを読み込む関数
+    """
+    # チェックポイントのロード
+    # else以下 : CPUデバイスでGPUデバイスに保存されているチェックポイントをロードする方法(以下参考)
+    # https://discuss.pytorch.org/t/on-a-cpu-device-how-to-load-checkpoint-saved-on-gpu-device/349
     checkpoint = torch.load(file_path) if use_cuda else \
         torch.load(file_path, map_location=lambda storage, location: storage)
+
     model = Net()
+    
+    # モデルの保存と読み込み : torch.save, torch.load, torch.nn.Module.load_state_dict
+    # https://pytorch.org/tutorials/beginner/saving_loading_models.html
     model.load_state_dict(checkpoint['state_dict'])
     return model
 
 def load_checkpoint_T1(file_path, use_cuda=False):
+    """
+    train_T1.pyで保存した重みを読み込む関数(同上)
+    """
     checkpoint = torch.load(file_path) if use_cuda else \
         torch.load(file_path, map_location=lambda storage, location: storage)
     model = LSTMNet(is_cuda=use_cuda,
@@ -88,31 +99,34 @@ if __name__ == "__main__":
     start = time.time()
 
     header = ['Container ID','Sequence', 'Container Capacity','Filling type', 'Filling level']
-    print('Container, ID Sequence, Container Capacity, Filling type, Filling level')
+    print('Container ID, Sequence, Container Capacity, Filling type, Filling level')
     
     use_cuda = torch.cuda.is_available()
     root_dir = args.root
 
+    # 以下Task1,2のチェックポイントの読み込み
     model_dir = os.path.join(root_dir, './models')
     model_T2=load_checkpoint_T2(os.path.join(model_dir, "T2_{}_{}_{}_{}.pth".format(args.train_type,args.val,args.loss_type,args.t2_epochs)), use_cuda=use_cuda)
-
     model_T1=load_checkpoint_T1(os.path.join(model_dir, "T1_{}_{}_{}_{}.pth".format(args.train_type,args.val,args.loss_type,args.t1_epochs)), use_cuda=use_cuda)
     
     if use_cuda:
         model_T2.cuda()
         model_T1.cuda()
-
+    
+    # torchを評価モードへ
     model_T2.eval()
     model_T1.eval()
-    hidden = model_T1.init_hidden(1)
+
+    hidden = model_T1.init_hidden(1) # これは何？？
+
     answer_list = []
     pad = Padding(100)
     DT=Detection() 
     for folder_num in args.folder_num:
+        # test setのデータを読み込む --> files
         pth = os.path.join(root_dir,str(folder_num), 'audio')
         pth_rgb=os.path.join(root_dir,str(folder_num), 'rgb')
         files = glob(pth + "/*")
-        #print("folder_num:{}".format(folder_num))
 
         for file in sorted(files):
             predlist = []
@@ -166,7 +180,6 @@ if __name__ == "__main__":
                 
                 
             ###start of task3 
-            
             filename=os.path.basename(file).replace("audio",args.view).replace("wav","mp4")
             path_video=os.path.join(pth_rgb,filename)
             VP=Video_processing(path_video,args.step_T3)
@@ -192,7 +205,6 @@ if __name__ == "__main__":
             point_data=make_pointcloud(rgb_mask,param,depth_img)
             point_data_normal=outiers_processing(point_data)
             volume=volume_by_world2image(point_data_normal,param,rgb_mask[1])
-            
             ###end of task3
             print("{:2d}{:2d}{:6.1f}{:2d}{:2d}".format(folder_num,seqence,volume,final_pred_T2,pred_T1.item()))
             answer_list.append([folder_num,seqence,volume,final_pred_T2,pred_T1.item()])
