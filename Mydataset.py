@@ -28,20 +28,22 @@ class MyDataset(torch.utils.data.Dataset):
         filling_type = np.load(os.path.join(root_pth, 'audio', 'filling_type.npy'))
         pouring_or_shaking = np.load(os.path.join(root_pth,  'audio', 'pouring_or_shaking.npy'))
 
-        # 各種設定　<-- 何この変数
+        # self.label : 31796要素分の(0,1,2,3)のnumpy配列 --> クラスかな？？
         self.label = filling_type * pouring_or_shaking
-        self.is_test = test
+
+        self.is_test = test # testセットかどうかの保存変数
         self.each_class_size = []
 
         # 各クラスに属するデータ数を保存
         for i in range(class_num):
             self.each_class_size.append(np.count_nonzero(self.label==i))
  
-        # ここは何をやってるんだ
+        # mfccフォルダのデータを一つずつ確認しmax. minを更新する(min maxが何を表すかは謎)
         mx=0
         mn=1000
         for idx in range(self.label.shape[0]):
             data=np.load(os.path.join(self.audio_pth, "{0:06d}".format(idx+1) + '.npy'), allow_pickle=True)
+            # data === 000000.wav 0000001.wav ... 
             tmp_max=np.max(data)
             tmp_min=np.min(data)
             if mx<tmp_max:
