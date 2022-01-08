@@ -16,3 +16,6 @@ __pycache__/
 
 # Mac用
 .DS_Store
+
+#p4merge用
+.orig

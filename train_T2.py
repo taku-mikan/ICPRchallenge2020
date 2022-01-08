@@ -1,24 +1,20 @@
+from __future__ import absolute_import, division, print_function
 
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
+import os
+import pdb
+import random
+
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.autograd import Variable
+from torch.utils.data.dataset import Subset
+from tqdm import tqdm
 
 from model import Net
 from Mydataset import MyDataset
-
-import os
-from tqdm import tqdm
-import matplotlib.pyplot as plt
-import numpy as np
-import pdb
-
-import torch
-import torch.optim as optim
-import torch.nn as nn
-from torch.autograd import Variable
-from torch.utils.data.dataset import Subset
-import random
-
 
 """setup"""
 random.seed(0)
@@ -28,6 +24,12 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 def loss_function(output, target, inv_E, loss_type = 'CE', reduction = 'sum', gamma=2,):
+    """
+    損失関数を設定する関数
+    "CE" : CrossEntropy , "FL" : focal loss
+    focal loss :  不均衡なデータセットの際の損失関数↓Quiitaの記事(CEに(1-p)^γかける)
+    https://qiita.com/tancoro/items/c58cbb33ee1b5971ee3b
+    """
     
     loss = None
     eps = 1e-7
@@ -42,7 +44,7 @@ def loss_function(output, target, inv_E, loss_type = 'CE', reduction = 'sum', ga
         m = torch.nn.Sigmoid()
         output = m(output)
         output = torch.clamp(output, eps, 1-eps)
-        loss = (1-output)**gamma * torch.log(output)
+        loss = (1-output)**gamma * torch.log(output) # output=p, gammma=γ
 
         loss = -1 * target.float() * inv_E.float() * loss
         if reduction == 'sum':
@@ -81,34 +83,60 @@ if __name__ == "__main__":
                         choices=[-1,1,2,3,4,5,6,7,8,9],
                         help = 'which train folder is used as validation (not trained) [default: -1]')
     args = parser.parse_args()
+
     print("Loading data...")
     CLASS_NUM = 4
     CHANNEL_NUM = 8
     
     use_cuda = torch.cuda.is_available()
     root_dir = args.root
-    results_dir = os.path.join(root_dir, 'T2_results')
+    results_dir = os.path.join(root_dir, 'T2_results') # 結果を保存するフォルダpath
     os.makedirs(results_dir,exist_ok=True)
     
-    train_indices = []
-    val_indices = []
+    train_indices = [] # 学習データのindex
+    val_indices = [] # validationデータのindex
+
     mydataset = MyDataset(root_pth=root_dir, test=False)
-    n_samples = len(mydataset)
+    n_samples = len(mydataset) # サンプル(データ)数 -> 31769
     folder_count = np.load(os.path.join(root_dir, 'audio', 'folder_count.npy')).tolist()
     
-    if args.train_type == 'part' and args.val != -1:
-        l = list(range(0, n_samples))
+    # 以下trainデータとvalidationデータ分割するコード(今年はここを変更かな？？)
+    # if args.train_type == 'part' and args.val != -1:
+    #     l = list(range(0, n_samples)) # [0,1,2,3,...,31767, 31768]
+    #     total_num = 0
+    #     for i, num in enumerate(folder_count):
+    #         # i=(container id) -1の値,  
+    #         # folder_count : [6134, 4534, 4386, 3994, 4342, 5382, 1100, 1001, 923]
+    #         if i != args.val-1:
+    #             train_indices += l[total_num:total_num+num]
+    #         else:
+    #             val_indices += l[total_num:total_num+num]
+    #         total_num += num
+    # else:
+    #      train_indices = list(range(0, n_samples))  
+    #      val_indices = (np.random.choice(train_indices, 1000, replace=False)).tolist()
+
+    # 自分でかいた部分 : trainとvalidationの分割
+    if args.train_type == "part" :
         total_num = 0
-        for i, num in enumerate(folder_count):
-            if i != args.val-1:
-                train_indices += l[total_num:total_num+num]
-            else:
-                val_indices += l[total_num:total_num+num]
+        for num in folder_count:
+            # folder_count : [6134, 4534, 4386, 3994, 4342, 5382, 1100, 1001, 923]
+            fol_indices = list(range(total_num, total_num+num))
+            fol_indices = random.sample(fol_indices, num)
+            # train : validation = 80 : 20
+            train_size = int(num * 0.8)
+
+            train_indices += fol_indices[0:train_size]
+            val_indices += fol_indices[train_size:]
+
             total_num += num
     else:
-        train_indices = list(range(0, n_samples))  
+        train_indices = list(range(0, n_samples))
         val_indices = (np.random.choice(train_indices, 1000, replace=False)).tolist()
     
+    # torch.utils.data.Subset : train-validation(==データ)を分割する役割
+    # Subset(dataset, indices)で分割可能 ↓Quiitaの記事
+    # https://qiita.com/takurooo/items/ba8c509eaab080e2752c
     train_dataset = Subset(mydataset, train_indices)
     val_dataset =  Subset(mydataset, val_indices)
     
@@ -120,10 +148,12 @@ if __name__ == "__main__":
                                                  batch_size=args.batch_size, 
                                                  shuffle=True)
     
-    model     = Net()
+    model     = Net() #CNNのモデル
     optimizer = optim.Adam(model.parameters(), lr=args.lr,  weight_decay=1e-5)
+
     if use_cuda:
         model.cuda()
+
     train_loss_list = []
     val_loss_list   = []
     train_size  = len(train_dataset)
@@ -131,7 +161,9 @@ if __name__ == "__main__":
     each_class_size = torch.tensor(each_class_size,dtype=torch.float)
     if use_cuda:
         each_class_size = each_class_size.cuda()
+
     inv_E = log_inverse_class_frequency(each_class_size, train_size)
+    
     def train(epoch):
         model.train()
         loss_train = 0.0
@@ -168,8 +200,6 @@ if __name__ == "__main__":
                 audio = Variable(audio)
                 target = Variable(target)
 
-                
-
                 outputs = model(audio)
                 _,preds=torch.max(outputs,1)
             
@@ -180,6 +210,7 @@ if __name__ == "__main__":
             
           
         print("Test Epoch {}/{} Loss:{:.4f} Acc:{:.4f}%".format(epoch,args.epochs,loss_test/len(val_loader),correct_test/len(val_loader)/args.batch_size*100))
+
     print("============================================================")  
     print('use_cuda: ',     use_cuda)
     

@@ -1,34 +1,48 @@
-
-import numpy as np
 import os
-import pandas as pd
-import torch
-from torch.utils.data import Dataset, DataLoader
-
 import random
 
+import numpy as np
+import pandas as pd
+import torch
+from torch.utils.data import DataLoader, Dataset
+
 """setup"""
-random.seed(123)
-np.random.seed(123)
-torch.manual_seed(123)
+random.seed(0)
+np.random.seed(0)
+torch.manual_seed(0)
 torch.backends.cudnn.deterministic = True
+# --> pytorch : CNNのlossが毎回変わることを防ぐ == 決定論的な振る舞いを指定
+# https://qiita.com/chat-flip/items/c2e983b7f30ef10b91f6
+
 torch.backends.cudnn.benchmark = False
+# --> これは何(公式サイトは以下)
+# https://pytorch.org/docs/stable/backends.html
 
 class MyDataset(torch.utils.data.Dataset):
     def __init__(self,root_pth,test=False,transform = None):
+        # クラス数
         class_num=4
+        # 各データへのpathの設定
         self.audio_pth = os.path.join(root_pth, 'audio', 'mfcc')
         filling_type = np.load(os.path.join(root_pth, 'audio', 'filling_type.npy'))
         pouring_or_shaking = np.load(os.path.join(root_pth,  'audio', 'pouring_or_shaking.npy'))
+
+        # self.label : 31796要素分の(0,1,2,3)のnumpy配列 --> クラスかな？？
         self.label = filling_type * pouring_or_shaking
-        self.is_test=test
-        self.each_class_size = []
+
+        self.is_test = test # testセットかどうかの保存変数
+        self.each_class_size = [] # それぞれのクラスに属するデータの数
+
+        # 各クラスに属するデータ数を保存
         for i in range(class_num):
             self.each_class_size.append(np.count_nonzero(self.label==i))
+ 
+        # mfccフォルダのデータを一つずつ確認しmax. minを更新する(min maxが何を表すかは謎)
         mx=0
         mn=1000
         for idx in range(self.label.shape[0]):
             data=np.load(os.path.join(self.audio_pth, "{0:06d}".format(idx+1) + '.npy'), allow_pickle=True)
+            # data === 000000.wav 0000001.wav ... 
             tmp_max=np.max(data)
             tmp_min=np.min(data)
             if mx<tmp_max:
@@ -39,9 +53,14 @@ class MyDataset(torch.utils.data.Dataset):
         self.mx=mx
             
     def __len__(self):
+        # self.label.shape = (31769, )
         return self.label.shape[0]
     
     def __getitem__(self, idx):
+        """
+        index(idx)を受け取り、学習(self.is_test=False)ならlabelと一緒に,
+        testセットならdataだけ(labelは-1)を返す
+        """
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
@@ -154,6 +173,7 @@ if __name__=="__main__":
     root_pth = args.root
 
     mydataset = MyDataset(root_pth)
+    
     data, lbl = mydataset[150]
     print(mydataset.mn, ' ', mydataset.mx)
     
