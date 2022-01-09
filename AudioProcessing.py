@@ -104,7 +104,7 @@ if __name__ == "__main__":
     
     # df <- annotations.csv
     df = pd.read_csv('annotations.csv', header = 0)
-    df_len=len(df)
+    df_len=len(df) # データ数
 
     """
     フォルダの作成
@@ -133,8 +133,8 @@ if __name__ == "__main__":
         # https://note.nkmk.me/python-pandas-at-iat-loc-iloc/
         file_name = df.iat[fileidx, 2]
         folder_num = df.iat[fileidx, 0] # container_id
-        start_time =  df.iat[fileidx, 9]
-        end_time = df.iat[fileidx, 10]
+        start_time =  df.iat[fileidx, 8]
+        end_time = df.iat[fileidx, 9]
         filling_type = df.iat[fileidx, 4]
 
         
@@ -148,29 +148,31 @@ if __name__ == "__main__":
         if audio_path == "./data/8/audio/s1_fi2_fu2_b1_l0_audio.wav" :
             continue
 
-        sample_rate, signal = scipy.io.wavfile.read(audio_path)
         # wavファイルの読み取り : scipy.io.wavfile ↓公式サイト
         # https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.read.html
         # 返り値 : sample_rate==int signal==numpy array (N_samples, N_channels)
+        sample_rate, signal = scipy.io.wavfile.read(audio_path)
+        # sample_rate:44100, signal:(N, 8)(numpy.ndarray)
         
         ap = AudioProcessing(sample_rate,signal,nfilt=save_size)
         mfcc = ap.calc_MFCC()
-        mfcc_length=mfcc.shape[0]
+        # mfcc : (N, 64, 8)(numpy.ndarray)
+        mfcc_length=mfcc.shape[0] # N
 
         if mfcc_length < save_size:
             print("file {} is too short".format(fileidx))
         else:
             # このelse以下が何やってるのかよくわからん
-            f_step=int(mfcc.shape[1]*args.ratio_step)
-            f_length=mfcc.shape[1]
+            f_step=int(mfcc.shape[1]*args.ratio_step) # 64 * 0.25 = 16
+            f_length=mfcc.shape[1] # 64
 
-            # no.ceil : 小数点の切り上げ
-            save_mfcc_num=int(np.ceil(float(np.abs(mfcc_length - save_size)) / f_step))
+            # np.ceil : 小数点の切り上げ
+            save_mfcc_num=int(np.ceil(float(np.abs(mfcc_length - save_size)) / f_step)) #000000.wavでは13
             folder_count_detail[folder_num-1].append(save_mfcc_num)
 
             for i in range(save_mfcc_num):
                 count += 1
-                tmp_mfcc = mfcc[i*f_step:save_size+i*f_step,: ,:]
+                tmp_mfcc = mfcc[i*f_step:save_size+i*f_step,: ,:] # (64, 64, 8)
 
                 if start_time == -1:
                     pouring_or_shaking_list.append(0)
@@ -184,7 +186,7 @@ if __name__ == "__main__":
                 folder_count[folder_num-1] += 1
                 
                 np.save(os.path.join(mfcc_path, "{0:06d}".format(count)), tmp_mfcc)
-                # 000000.wav 000001.wav ... 
+                # 000001.npy 000002.npy ... 031796.npy
                 
         pbar.update()
 
