@@ -17,5 +17,9 @@ __pycache__/
 # Mac用
 .DS_Store
 
+# .ipynb関連
+temp.ipynb
+test.ipynb
+
 #p4merge用
 .orig

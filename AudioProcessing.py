@@ -213,6 +213,3 @@ if __name__ == "__main__":
 
     elapsed_time = time.time() - start
     print("elapsed_time:{}".format(elapsed_time) + "sec")
-            
-            
-            

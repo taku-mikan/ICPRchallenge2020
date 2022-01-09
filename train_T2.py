@@ -59,6 +59,7 @@ def log_inverse_class_frequency(n, N):
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', action='store', type = str, default='./data',
                         help = 'root directory of the dataset')
@@ -139,19 +140,23 @@ if __name__ == "__main__":
     # https://qiita.com/takurooo/items/ba8c509eaab080e2752c
     
     # 共通する要素がないことの確認
-    dob = set(train_indices) & set(val_indices)
-    print("重複 : ", len(dob))
+    # dob = set(train_indices) & set(val_indices)
+    # print("重複 : ", len(dob))
     # 数が正しいかの確認
-    print("全データ数 : ", len(train_indices)+len(val_indices))
+    # print("全データ数 : ", len(train_indices)+len(val_indices))
     
+    # pytorch:Validation Datesetを作る方法 : Subset(dataset, indicies)↓Qiita記事
+    # https://qiita.com/takurooo/items/ba8c509eaab080e2752c
     train_dataset = Subset(mydataset, train_indices)
     val_dataset =  Subset(mydataset, val_indices)
     
-    train_loader   = torch.utils.data.DataLoader(train_dataset,
+    # pytorch : Dataset, DataLoaderに関して↓Qiita記事
+    # https://qiita.com/typecprint/items/2d616b502dd063ba4e27
+    train_loader = torch.utils.data.DataLoader(train_dataset,
                                                  batch_size=args.batch_size, 
                                                  shuffle=True,
                                                  drop_last = True)
-    val_loader   = torch.utils.data.DataLoader(val_dataset,
+    val_loader = torch.utils.data.DataLoader(val_dataset,
                                                  batch_size=args.batch_size, 
                                                  shuffle=True)
     
@@ -161,54 +166,63 @@ if __name__ == "__main__":
     if use_cuda:
         model.cuda()
 
-    train_loss_list = []
-    val_loss_list   = []
+    train_loss_list = [] # epochごとのtrain_loss(多分)
+    val_loss_list   = [] # epochごとのvalidation_loss(多分)
     train_size  = len(train_dataset)
     each_class_size = mydataset.get_each_class_size()
     each_class_size = torch.tensor(each_class_size,dtype=torch.float)
+
     if use_cuda:
         each_class_size = each_class_size.cuda()
 
     inv_E = log_inverse_class_frequency(each_class_size, train_size)
     
     def train(epoch):
+
         model.train()
-        loss_train = 0.0
-        correct_train=0
+        loss_train = 0.0 # 損失関数の値
+        correct_train=0 # 正解数 : 正解率計算用
+
         for batch_idx, (audio, target) in enumerate(train_loader):
+
             if use_cuda:
                 audio = audio.cuda()
                 target = target.cuda()
+
             audio = Variable(audio)
             target = Variable(target)
             
             optimizer.zero_grad()
             outputs = model(audio)
-            _,preds=torch.max(outputs,1)
-            loss=loss_function(outputs, target, inv_E=inv_E, loss_type= args.loss_type, reduction=args.reduction)
-            loss_train += loss.item()
-            correct_train+=torch.sum(preds==target).item()
+            _, preds = torch.max(outputs,1) # 一番確率の大きいものを予測とする
+            loss = loss_function(outputs, target, inv_E=inv_E, loss_type= args.loss_type, reduction=args.reduction)
+            loss_train += loss.item() # lossの値(mean or sum)を足す
+            correct_train+=torch.sum(preds==target).item() # 正しく予測できた個数を足す
 
-            loss.backward()
+            loss.backward() # backpropagation
             optimizer.step()
             
         print("Train Epoch {}/{} Loss:{:.4f} Acc:{:.4f}%".format(epoch,args.epochs,loss_train/len(train_loader),correct_train/len(train_loader)/args.batch_size*100))
             
            
     def test(epoch):
+
         model.eval()
-        loss_test = 0
-        correct_test=0
+        loss_test = 0 # testセットの損失
+        correct_test=0 # 正解数
+
         for batch_idx, (audio, target) in enumerate(tqdm(val_loader)):
+
             if use_cuda:
                 audio = audio.cuda()
                 target = target.cuda()
+
             with torch.no_grad():
                 audio = Variable(audio)
                 target = Variable(target)
 
                 outputs = model(audio)
-                _,preds=torch.max(outputs,1)
+                _, preds = torch.max(outputs,1)
             
                 loss = loss_function(outputs, target, inv_E=inv_E, loss_type= args.loss_type, reduction=args.reduction)
                 
