@@ -103,7 +103,7 @@ if __name__ == "__main__":
     root_pth = args.root
     
     # df <- annotations.csv
-    df = pd.read_csv('annotations.csv', header = 0)
+    df = pd.read_csv('annotations_sort.csv', header = 0)
     df_len=len(df) # データ数
 
     """
