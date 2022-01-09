@@ -133,8 +133,8 @@ if __name__ == "__main__":
         # https://note.nkmk.me/python-pandas-at-iat-loc-iloc/
         file_name = df.iat[fileidx, 2]
         folder_num = df.iat[fileidx, 0] # container_id
-        start_time =  df.iat[fileidx, 8]
-        end_time = df.iat[fileidx, 9]
+        start_time =  df.iat[fileidx, 9]
+        end_time = df.iat[fileidx, 10]
         filling_type = df.iat[fileidx, 4]
 
         
