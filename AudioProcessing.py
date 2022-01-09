@@ -174,12 +174,23 @@ if __name__ == "__main__":
                 count += 1
                 tmp_mfcc = mfcc[i*f_step:save_size+i*f_step,: ,:] # (64, 64, 8)
 
-                if start_time == -1:
+                # start-endは後回し...
+                # if start_time == -1:
+                #     pouring_or_shaking_list.append(0)
+                # elif start_time/ap.signal_length_t*mfcc_length<i*f_step+f_length*0.75 and end_time/ap.signal_length_t*mfcc_length>i*f_step+f_length*0.25:
+                #     pouring_or_shaking_list.append(1) 
+                # else:
+                #     pouring_or_shaking_list.append(0)
+
+                # container_id(folder_num)が1~6ならpouring, 7~9:shaking
+                pouring = [1,2,3,4,5,6]
+                shaking = [7,8,9]
+                if folder_num in pouring :
+                    pouring_or_shaking_list.append(1)
+                elif folder_num in shaking:
                     pouring_or_shaking_list.append(0)
-                elif start_time/ap.signal_length_t*mfcc_length<i*f_step+f_length*0.75 and end_time/ap.signal_length_t*mfcc_length>i*f_step+f_length*0.25:
-                    pouring_or_shaking_list.append(1) 
-                else:
-                    pouring_or_shaking_list.append(0)
+                else :
+                    print("no container id")
                 
                 filling_type_list.append(filling_type)
                 file_idx_list.append(fileidx)
