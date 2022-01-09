@@ -42,7 +42,7 @@ class MyDataset(torch.utils.data.Dataset):
         mn=1000
         for idx in range(self.label.shape[0]):
             data=np.load(os.path.join(self.audio_pth, "{0:06d}".format(idx+1) + '.npy'), allow_pickle=True)
-            # data === 000000.wav 0000001.wav ... 
+            # data === 000001.npy 0000002.npy ... 
             tmp_max=np.max(data)
             tmp_min=np.min(data)
             if mx<tmp_max:
