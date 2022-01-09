@@ -137,6 +137,13 @@ if __name__ == "__main__":
     # torch.utils.data.Subset : train-validation(==データ)を分割する役割
     # Subset(dataset, indices)で分割可能 ↓Quiitaの記事
     # https://qiita.com/takurooo/items/ba8c509eaab080e2752c
+    
+    # 共通する要素がないことの確認
+    dob = set(train_indices) & set(val_indices)
+    print("重複 : ", len(dob))
+    # 数が正しいかの確認
+    print("全データ数 : ", len(train_indices)+len(val_indices))
+    
     train_dataset = Subset(mydataset, train_indices)
     val_dataset =  Subset(mydataset, val_indices)
     

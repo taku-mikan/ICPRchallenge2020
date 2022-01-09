@@ -144,8 +144,8 @@ if __name__ == "__main__":
         audio_filename = file_name.rsplit("_", 1)[0] + '_audio.wav'
 
         audio_path = os.path.join(root_pth, str(folder_num), 'audio', audio_filename)
-        # 337番目の音声データは飛ばす
-        if audio_path == "./data/8/audio/s1_fi2_fu2_b1_l0_audio.wav" :
+        # 377番目の音声データは飛ばす
+        if audio_path == "./data/1/audio/s2_fi1_fu2_b1_l0_audio.wav" :
             continue
 
         # wavファイルの読み取り : scipy.io.wavfile ↓公式サイト
