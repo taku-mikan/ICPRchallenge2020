@@ -95,7 +95,7 @@ if __name__ == "__main__":
     parser.add_argument('--root', type=str, default='./data')
     parser.add_argument('--ratio_step', type=float, default=0.25)
     parser.add_argument('--triming', type=bool, default=False, choices=[True, False])
-    parser.add_argument("--treshold", type=int, default=20)
+    parser.add_argument("--threshold", type=int, default=20)
     args = parser.parse_args()
     
     start = time.time()
