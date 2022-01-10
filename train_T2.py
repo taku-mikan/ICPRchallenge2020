@@ -68,14 +68,20 @@ def save_draw_loss(loss_train, loss_valid):
     plt.plot(loss_train, label="train")
     plt.plot(loss_valid, label="val")
     plt.legend(frameon=False)
-    plt.savefig("T2_Loss.npg")
+    plt.savefig("T2_Loss.png")
 
 def save_draw_accuracy(ac_train, ac_val):
     """
     trainデータとvalidデータのaccuracyを図示したものを保存する関数
     """
-
-
+    plt.figure(figsize=(12, 8))
+    plt.title("Accuracy")
+    plt.xlabel("epoch")
+    plt.ylabel("accuracy")
+    plt.plot(ac_train, label="train")
+    plt.plot(ac_val, label="val")
+    plt.legend(frameon=False)
+    plt.savefig("T2_acc.png")
 
 
 if __name__ == "__main__":
@@ -302,7 +308,7 @@ if __name__ == "__main__":
         save_draw_loss(train_loss_list, val_loss_list)
     if args.acc_image:
         save_draw_accuracy(train_acc_list, val_acc_list)
-            
+     
     save_checkpoint={
             'state_dict': model.state_dict(),
             'optimizer' : optimizer.state_dict(),
