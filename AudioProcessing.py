@@ -94,7 +94,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', type=str, default='./data')
     parser.add_argument('--ratio_step', type=float, default=0.25)
-    parser.add_argument('--triming', type=bool, default=False, choices=[True, False])
+    parser.add_argument('--trimming', type=bool, default=False, choices=[True, False])
     parser.add_argument("--threshold", type=int, default=20)
     args = parser.parse_args()
     
@@ -157,7 +157,7 @@ if __name__ == "__main__":
         
         # ここに他の前処理を加えればいいんじゃないかな
         # traming
-        if args.traiming:
+        if args.trimming:
             if folder_num == 0:
                 signal = signal.astype("float32")
             else :
