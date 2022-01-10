@@ -104,9 +104,9 @@ if __name__ == "__main__":
     parser.add_argument('--val', type=int, default=-1, metavar='N', 
                         choices=[-1,1,2,3,4,5,6,7,8,9],
                         help = 'which train folder is used as validation (not trained) [default: -1]')
-    parser.add_argument("--loss_image", type=bool, default=False, chocies=[True, False],
+    parser.add_argument("--loss_image", type=bool, default=False, choices=[True, False],
                         help="whether save loss-by-epoch or not")
-    parser.add_argument("--acc_image", type=bool, default=False, chocies=[True, False],
+    parser.add_argument("--acc_image", type=bool, default=False, choices=[True, False],
                         help="whether save accuracy-by-epoch or not")
     args = parser.parse_args()
 
