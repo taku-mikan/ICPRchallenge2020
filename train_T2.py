@@ -243,10 +243,10 @@ if __name__ == "__main__":
             loss.backward() # backpropagation
             optimizer.step()
 
-            if args.loss_image:
-                train_loss_list.append(loss_train/len(train_loader))
-            if args.acc_image:
-                train_acc_list.append(correct_train/len(train_loader)/args.batch_size*100)
+        if args.loss_image:
+            train_loss_list.append(loss_train/len(train_loader))
+        if args.acc_image:
+            train_acc_list.append(correct_train/len(train_loader)/args.batch_size*100)
             
             
         print("Train Epoch {}/{} Loss:{:.4f} Acc:{:.4f}%".format(epoch, args.epochs, loss_train/len(train_loader), correct_train/len(train_loader)/args.batch_size*100))
