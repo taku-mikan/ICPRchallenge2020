@@ -279,7 +279,7 @@ if __name__ == "__main__":
         if args.acc_image:
             val_loss_list.append(loss_test/len(val_loader))
         if args.acc_image:
-            train_acc_list.append(correct_test/len(val_loader)/args.batch_size*100)
+            val_acc_list.append(correct_test/len(val_loader)/args.batch_size*100)
             
         print("Test Epoch {}/{} Loss:{:.4f} Acc:{:.4f}%".format(epoch, args.epochs, loss_test/len(val_loader), correct_test/len(val_loader)/args.batch_size*100))
 
@@ -324,6 +324,12 @@ if __name__ == "__main__":
         }
     torch.save(save_checkpoint, "{}/T2_{}_{}_{}_{}.pth".format(results_dir,args.train_type,args.val,args.loss_type,args.epochs))
 
+    # リストに正しく保存できているか確認
+    print("train_loss_list : ", len(train_loss_list))
+    print("train_acc_lost : ", len(train_acc_list))
+    print("val_loss_list : ", len(val_loss_list))
+    print("val_acc_list : ", len(val_loss_list))
+    
     elapsed_time = time.time() - start
     print("elapsed_time:{}".format(elapsed_time) + "sec")
         
