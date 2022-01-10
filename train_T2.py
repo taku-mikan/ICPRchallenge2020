@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import pdb
 import random
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -116,6 +117,8 @@ if __name__ == "__main__":
     parser.add_argument("--acc_image", type=bool, default=False, choices=[True, False],
                         help="whether save accuracy-by-epoch or not")
     args = parser.parse_args()
+
+    start = time.time()
 
     print("Loading data...")
     CLASS_NUM = 4
@@ -320,4 +323,7 @@ if __name__ == "__main__":
         
         }
     torch.save(save_checkpoint, "{}/T2_{}_{}_{}_{}.pth".format(results_dir,args.train_type,args.val,args.loss_type,args.epochs))
+
+    elapsed_time = time.time() - start
+    print("elapsed_time:{}".format(elapsed_time) + "sec")
         

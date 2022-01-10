@@ -19,8 +19,8 @@ __pycache__/
 .DS_Store
 
 #p4merge用
-.orig
+*.orig
 
 # loss-image用
-.png
-.jpg
+*.png
+*.jpg
