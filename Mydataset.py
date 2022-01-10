@@ -177,7 +177,7 @@ if __name__=="__main__":
     data, lbl = mydataset[150]
     print(mydataset.mn, ' ', mydataset.mx)
     
-    #mydataset=MyDataset(root_pth)
+    # mydataset=MyDataset(root_pth)
     mylstmdataset = MyLSTMDataset(root_pth)
     data, lbl = mylstmdataset[150]
     print(data, ' ', lbl)

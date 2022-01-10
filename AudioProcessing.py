@@ -172,8 +172,8 @@ if __name__ == "__main__":
             if filling_type in [1,2]:
                 signal = signal.astype("float32")
                 signal, librosa.effects.trim(signal, top_db=threshold)
-                signal /= np.abs(signal).max() # 正規化
                 # signal = signal.astype("int16")
+        signal /= np.abs(signal).max() # 正規化
     
         ap = AudioProcessing(sample_rate,signal,nfilt=save_size)
         mfcc = ap.calc_MFCC()
