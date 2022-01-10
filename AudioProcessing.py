@@ -156,7 +156,7 @@ if __name__ == "__main__":
         # sample_rate:44100, signal:(N, 8)(numpy.ndarray)
         
         # ここに他の前処理を加えればいいんじゃないかな
-        # traming
+        # trimming
         # if args.trimming:
         #     if folder_num == 0:
         #         signal = signal.astype("float32")

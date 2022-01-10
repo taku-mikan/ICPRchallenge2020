@@ -69,8 +69,9 @@ class MyDataset(torch.utils.data.Dataset):
         if self.is_test is False:
             lbl = self.label[idx]
         data=np.load(os.path.join(self.audio_pth, "{0:06d}".format(idx+1) + '.npy'), allow_pickle=True)
+        # 正規化
         data= (data-self.mn)/(self.mx-self.mn)
-        data=data.transpose(2,0,1)
+        data=data.transpose(2,0,1) # pytorchの入力に合わせているのかと
         data=torch.from_numpy(data.astype(np.float32))
         return data , lbl
             
@@ -149,6 +150,7 @@ class MyLSTMDataset(torch.utils.data.Dataset):
             
         data=np.load(os.path.join(self.mid_pth, "{0:06d}".format(idx+1) + '.npy'), allow_pickle=True)
         pred=np.load(os.path.join(self.pred_pth, "{0:06d}".format(idx+1) + '.npy'), allow_pickle=True)
+        # 正規化
         data = (data-self.mn)/(self.mx-self.mn)
         data = self.pad(data, pred)
 
