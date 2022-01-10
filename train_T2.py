@@ -65,8 +65,8 @@ def save_draw_loss(loss_train, loss_valid):
     plt.xlabel("epoch")
     plt.ylabel("loss")
     plt.grid(True)
-    plt.plot(loss_train, label="train")
-    plt.plot(loss_valid, label="val")
+    plt.plot(range(len(loss_train)), loss_train, label="train")
+    plt.plot(range(len(loss_valid)), loss_valid, label="val")
     plt.legend(frameon=False)
     plt.savefig("T2_Loss.png")
 
@@ -78,8 +78,8 @@ def save_draw_accuracy(ac_train, ac_val):
     plt.title("Accuracy")
     plt.xlabel("epoch")
     plt.ylabel("accuracy")
-    plt.plot(ac_train, label="train")
-    plt.plot(ac_val, label="val")
+    plt.plot(range(len(ac_train)), ac_train, label="train")
+    plt.plot(range(len(ac_val)), ac_val, label="val")
     plt.legend(frameon=False)
     plt.savefig("T2_acc.png")
 
