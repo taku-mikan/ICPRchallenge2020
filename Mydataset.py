@@ -105,41 +105,59 @@ class Padding(object):
 
 
 class MyLSTMDataset(torch.utils.data.Dataset):
-    def __init__(self,root_pth,test=False,transform = None, padding_size = 100):
-        class_num=3
+
+    def __init__(self,root_pth,test=False, transform=None, padding_size=100):
+        class_num=3 # クラス数 : 0,50,90%
         self.mid_pth = os.path.join(root_pth, 'T2_mid')
         self.pred_pth = os.path.join(root_pth, 'T2_pred')
-        df = pd.read_csv(os.path.join('.', 'annotations.csv'), header=0, usecols=[5])
-        self.label = df['filling_level'].values
-        self.is_test=test
-        self.each_class_size = []
-        self.each_class_sum = [0]*class_num
+
+        df = pd.read_csv(os.path.join('.', 'annotations_sort.csv'), header=0, usecols=[5])
+        self.label = df['filling_level'].values # Task1におけるlabel
+        self.is_test=test # testデータか否か
+        self.each_class_size = [] # それぞれのラベルの数を保存 : sumとの違いはなんや
+        self.each_class_sum = [0]*class_num # それぞれのファイルの各ラベル
+
         for i in range(class_num):
             self.each_class_size.append(np.count_nonzero(self.label==i))
+
         mx=0
         mn=1000
         len_mx = 0
         
+        # index指定して1ファイルずつ処理する
         for idx in range(self.label.shape[0]):
-            data=np.load(os.path.join(self.mid_pth, "{0:06d}".format(idx+1) + '.npy'), allow_pickle=True)
-            self.each_class_sum[self.label[idx]]+=data.shape[0]
+            # 音声ファイルの読み込み
+            data = np.load(os.path.join(self.mid_pth, "{0:06d}".format(idx+1) + '.npy'), allow_pickle=True)
+            self.each_class_sum[self.label[idx]] += data.shape[0]
+            
             if data.shape[0] > len_mx:
-                len_mx=data.shape[0]
-            tmp_max=np.max(data)
-            tmp_min=np.min(data)
-            if mx<tmp_max:
-                mx=tmp_max
-            if mn>tmp_min:
-                mn=tmp_min
-        self.mn=mn
-        self.mx=mx
+                len_mx = data.shape[0]
+
+            tmp_max = np.max(data)
+            tmp_min = np.min(data)
+
+            if mx < tmp_max:
+                mx = tmp_max
+            if mn > tmp_min:
+                mn = tmp_min
+
+        self.mn = mn # 全体の中のmin
+        self.mx = mx # 全体の中のmax
         self.pad = Padding(padding_size)
-        print(len_mx)
+        print("max_langth : ", len_mx)
             
     def __len__(self):
+        """
+        データ数を返す関数
+        self.label = 全データのlabel
+        """
         return self.label.shape[0]
     
     def __getitem__(self, idx):
+        """
+        trainデータなら、dataとlabelをセットで、
+        testデータなら、dataのみを(label=-1)返す関数
+        """
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
@@ -147,21 +165,26 @@ class MyLSTMDataset(torch.utils.data.Dataset):
 
         if self.is_test is False:
             lbl = self.label[idx]
-            
-        data=np.load(os.path.join(self.mid_pth, "{0:06d}".format(idx+1) + '.npy'), allow_pickle=True)
-        pred=np.load(os.path.join(self.pred_pth, "{0:06d}".format(idx+1) + '.npy'), allow_pickle=True)
-        # 正規化
-        data = (data-self.mn)/(self.mx-self.mn)
+
+        data = np.load(os.path.join(self.mid_pth, "{0:06d}".format(idx+1) + '.npy'), allow_pickle=True)
+        pred = np.load(os.path.join(self.pred_pth, "{0:06d}".format(idx+1) + '.npy'), allow_pickle=True)
+        data = (data-self.mn)/(self.mx-self.mn) # 正規化
         data = self.pad(data, pred)
 
-        #np.clip(data, 0,1,out=data)
+        # np.clip(data, 0,1,out=data)
         data=torch.from_numpy(data.astype(np.float32))
         return data , lbl
             
     def get_each_class_size(self):
+        """
+        それぞれのクラスに属するデータの数を返す関数(numpy配列で)
+        """
         return np.array(self.each_class_size)
 
     def get_each_class_avg_len(self):
+        """
+        each~~~size,numの違いがわからん!!
+        """
         each_class_avg_len =  np.array(self.each_class_sum)/np.array(self.each_class_size)
         all_class_avg_len = np.sum(np.array(self.each_class_sum))/np.sum(np.array(self.each_class_size))
         return each_class_avg_len, all_class_avg_len
@@ -169,6 +192,7 @@ class MyLSTMDataset(torch.utils.data.Dataset):
     
 if __name__=="__main__":
     import argparse
+    
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', type = str, default='./data')
     args = parser.parse_args()
