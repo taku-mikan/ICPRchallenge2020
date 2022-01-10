@@ -1,4 +1,5 @@
 data/
+data_temp
 train/
 file_num.ipynb
 corsmal_data.csv
