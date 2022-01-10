@@ -161,6 +161,9 @@ if __name__ == "__main__":
             if folder_num == 0:
                 signal = signal.astype("float32")
             else :
+                # numpyのcast 
+                # https://note.nkmk.me/python-numpy-dtype-astype/
+                signal = signal.astype("float32")
                 signal, _ = librosa.effects.trim(signal, top_db=threshold)
     
         ap = AudioProcessing(sample_rate,signal,nfilt=save_size)
