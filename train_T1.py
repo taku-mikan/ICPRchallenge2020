@@ -57,6 +57,7 @@ def log_inverse_class_frequency(n, N):
 
 if __name__ == "__main__":
     import argparse
+    
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', action='store', type = str, default='./data',
                         help = 'root directory of the dataset')
