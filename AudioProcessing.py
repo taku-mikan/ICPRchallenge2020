@@ -157,14 +157,22 @@ if __name__ == "__main__":
         
         # ここに他の前処理を加えればいいんじゃないかな
         # traming
+        # if args.trimming:
+        #     if folder_num == 0:
+        #         signal = signal.astype("float32")
+        #     else :
+        #         # numpyのcast 
+        #         # https://note.nkmk.me/python-numpy-dtype-astype/
+        #         signal = signal.astype("float32")
+        #         # トリミング手法
+        #         # https://librosa.org/doc/main/generated/librosa.effects.trim.html
+        #         signal, _ = librosa.effects.trim(signal, top_db=threshold)
+
         if args.trimming:
-            if folder_num == 0:
+            if filling_type in [1,2]:
                 signal = signal.astype("float32")
-            else :
-                # numpyのcast 
-                # https://note.nkmk.me/python-numpy-dtype-astype/
-                signal = signal.astype("float32")
-                signal, _ = librosa.effects.trim(signal, top_db=threshold)
+                signal, librosa.effects.trim(signal, top_db=threshold)
+                signal = signal.astype("int16")
     
         ap = AudioProcessing(sample_rate,signal,nfilt=save_size)
         mfcc = ap.calc_MFCC()
