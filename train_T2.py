@@ -56,6 +56,27 @@ def loss_function(output, target, inv_E, loss_type = 'CE', reduction = 'sum', ga
 def log_inverse_class_frequency(n, N):
     return torch.log(N/n+1)
 
+def save_draw_loss(loss_train, loss_valid):
+    """
+    学習データとvalidationデータの学習の遷移をepochごとに図示したものを画像として保存する関数
+    """
+    plt.figure(figsize=(12, 8))
+    plt.title("Loss")
+    plt.xlabel("epoch")
+    plt.ylabel("loss")
+    plt.grid(True)
+    plt.plot(loss_train, label="train")
+    plt.plot(loss_valid, label="val")
+    plt.legend(frameon=False)
+    plt.savefig("T2_Loss.npg")
+
+def save_draw_accuracy(ac_train, ac_val):
+    """
+    trainデータとvalidデータのaccuracyを図示したものを保存する関数
+    """
+
+
+
 
 if __name__ == "__main__":
     import argparse
@@ -83,6 +104,10 @@ if __name__ == "__main__":
     parser.add_argument('--val', type=int, default=-1, metavar='N', 
                         choices=[-1,1,2,3,4,5,6,7,8,9],
                         help = 'which train folder is used as validation (not trained) [default: -1]')
+    parser.add_argument("--loss_image", type=bool, default=False, chocies=[True, False],
+                        help="whether save loss-by-epoch or not")
+    parser.add_argument("--acc_image", type=bool, default=False, chocies=[True, False],
+                        help="whether save accuracy-by-epoch or not")
     args = parser.parse_args()
 
     print("Loading data...")
@@ -166,8 +191,14 @@ if __name__ == "__main__":
     if use_cuda:
         model.cuda()
 
-    train_loss_list = [] # epochごとのtrain_loss(多分)
-    val_loss_list   = [] # epochごとのvalidation_loss(多分)
+    if args.loss_image:
+        train_loss_list = [] # epochごとのtrainデータのloss
+        val_loss_list = [] # epochごとのvalidationデータのloss
+    
+    if args.acc_image:
+        train_acc_list = [] # epochごとのtrainデータのaccuracy
+        val_acc_list = [] # epochごとのvalidationデータのaccuracy
+
     train_size  = len(train_dataset)
     each_class_size = mydataset.get_each_class_size()
     each_class_size = torch.tensor(each_class_size,dtype=torch.float)
@@ -201,8 +232,14 @@ if __name__ == "__main__":
 
             loss.backward() # backpropagation
             optimizer.step()
+
+            if args.loss_image:
+                train_loss_list.append(loss_train/len(train_loader))
+            if args.acc_image:
+                train_acc_list.append(correct_train/len(train_loader)/args.batch_size*100)
             
-        print("Train Epoch {}/{} Loss:{:.4f} Acc:{:.4f}%".format(epoch,args.epochs,loss_train/len(train_loader),correct_train/len(train_loader)/args.batch_size*100))
+            
+        print("Train Epoch {}/{} Loss:{:.4f} Acc:{:.4f}%".format(epoch, args.epochs, loss_train/len(train_loader), correct_train/len(train_loader)/args.batch_size*100))
             
            
     def test(epoch):
@@ -228,9 +265,13 @@ if __name__ == "__main__":
                 
                 loss_test += loss.item()
                 correct_test+=torch.sum(preds==target).item()
+        
+        if args.acc_image:
+            val_loss_list.append(loss_test/len(val_loader))
+        if args.acc_image:
+            train_acc_list.append(correct_test/len(val_loader)/args.batch_size*100)
             
-          
-        print("Test Epoch {}/{} Loss:{:.4f} Acc:{:.4f}%".format(epoch,args.epochs,loss_test/len(val_loader),correct_test/len(val_loader)/args.batch_size*100))
+        print("Test Epoch {}/{} Loss:{:.4f} Acc:{:.4f}%".format(epoch, args.epochs, loss_test/len(val_loader), correct_test/len(val_loader)/args.batch_size*100))
 
     print("============================================================")  
     print('use_cuda: ',     use_cuda)
@@ -256,6 +297,11 @@ if __name__ == "__main__":
         if epoch % args.log_interval==0 :
             test(epoch)
             print("------------------------------------")
+    
+    if args.loss_image:
+        save_draw_loss(train_loss_list, val_loss_list)
+    if args.acc_image:
+        save_draw_accuracy(train_acc_list, val_acc_list)
             
     save_checkpoint={
             'state_dict': model.state_dict(),
