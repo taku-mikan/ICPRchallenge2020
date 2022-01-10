@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import time
 
+import librosa
 import numpy as np
 import pandas as pd
 import scipy.io.wavfile
@@ -81,10 +82,8 @@ class AudioProcessing():
             for k in range(f_m, f_m_plus):
                 fbank[m - 1, k] = (bin[m + 1] - k) / (bin[m + 1] - bin[m])
         return fbank
-        
-        
-        
-          
+
+
 if __name__ == "__main__":
 
     import argparse
@@ -93,8 +92,10 @@ if __name__ == "__main__":
     https://qiita.com/kzkadc/items/e4fc7bc9c003de1eb6d0
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--root', type = str, default='./data')
-    parser.add_argument('--ratio_step', type =float, default=0.25)
+    parser.add_argument('--root', type=str, default='./data')
+    parser.add_argument('--ratio_step', type=float, default=0.25)
+    parser.add_argument('--triming', type=bool, default=False, choices=[True, False])
+    parser.add_argument("--treshold", type=int, default=20)
     args = parser.parse_args()
     
     start = time.time()
@@ -126,6 +127,7 @@ if __name__ == "__main__":
 
     pbar = tqdm(total=df_len)
     save_size = 64
+    threshold = args.threshold
     
     # indexで指定して1行ずつ処理する
     for fileidx in range(df_len):
@@ -133,10 +135,9 @@ if __name__ == "__main__":
         # https://note.nkmk.me/python-pandas-at-iat-loc-iloc/
         file_name = df.iat[fileidx, 2]
         folder_num = df.iat[fileidx, 0] # container_id
-        start_time =  df.iat[fileidx, 9]
-        end_time = df.iat[fileidx, 10]
-        filling_type = df.iat[fileidx, 4]
-
+        start_time =  df.iat[fileidx, 9] # start
+        end_time = df.iat[fileidx, 10] # end
+        filling_type = df.iat[fileidx, 4] # filling_type:0~3(none pasta rice water)
         
         # python : rsplitの説明
         # https://note.nkmk.me/python-split-rsplit-splitlines-re/
@@ -154,6 +155,14 @@ if __name__ == "__main__":
         sample_rate, signal = scipy.io.wavfile.read(audio_path)
         # sample_rate:44100, signal:(N, 8)(numpy.ndarray)
         
+        # ここに他の前処理を加えればいいんじゃないかな
+        # traming
+        if args.traiming:
+            if folder_num == 0:
+                signal = signal.astype("float32")
+            else :
+                signal, _ = librosa.effects.trim(signal, top_db=threshold)
+    
         ap = AudioProcessing(sample_rate,signal,nfilt=save_size)
         mfcc = ap.calc_MFCC()
         # mfcc : (N, 64, 8)(numpy.ndarray)
