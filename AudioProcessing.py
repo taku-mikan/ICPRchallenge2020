@@ -168,10 +168,10 @@ if __name__ == "__main__":
         #         # https://librosa.org/doc/main/generated/librosa.effects.trim.html
         #         signal, _ = librosa.effects.trim(signal, top_db=threshold)
 
+        signal = signal.astype("float32")
         if args.trimming:
             if filling_type in [1,2]:
-                signal = signal.astype("float32")
-                signal, librosa.effects.trim(signal, top_db=threshold)
+                signal, _ = librosa.effects.trim(signal, top_db=threshold)
                 # signal = signal.astype("int16")
         signal /= np.abs(signal).max() # 正規化
     
