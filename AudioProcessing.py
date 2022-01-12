@@ -125,6 +125,10 @@ if __name__ == "__main__":
     folder_count = [0]*9
     folder_count_detail = [[] for _ in range(9)]
 
+    audio_data = [] # tree系用
+    audio_filling_type = [] # audio用のlabel
+    audio_pour_shake = []
+
     pbar = tqdm(total=df_len)
     save_size = 64
     threshold = args.threshold
@@ -174,6 +178,18 @@ if __name__ == "__main__":
                 signal, _ = librosa.effects.trim(signal, top_db=threshold)
                 # signal = signal.astype("int16")
         signal /= np.abs(signal).max() # 正規化
+
+        audio_data.append(signal)
+        audio_filling_type.append(filling_type)
+        # container_id(folder_num)が1~6ならpouring, 7~9:shaking
+        pouring = [1,2,3,4,5,6]
+        shaking = [7,8,9]
+        if folder_num in pouring :
+            audio_pour_shake.append(1)
+        elif folder_num in shaking:
+            audio_pour_shake.append(0)
+        else :
+            print("no container id")
     
         ap = AudioProcessing(sample_rate,signal,nfilt=save_size)
         mfcc = ap.calc_MFCC()
@@ -204,8 +220,6 @@ if __name__ == "__main__":
                 #     pouring_or_shaking_list.append(0)
 
                 # container_id(folder_num)が1~6ならpouring, 7~9:shaking
-                pouring = [1,2,3,4,5,6]
-                shaking = [7,8,9]
                 if folder_num in pouring :
                     pouring_or_shaking_list.append(1)
                 elif folder_num in shaking:
@@ -226,6 +240,10 @@ if __name__ == "__main__":
     np.save(os.path.join(root_pth, 'audio', 'filling_type'), np.array(filling_type_list))
     np.save(os.path.join(root_pth, 'audio', 'folder_count'), np.array(folder_count))
     np.save(os.path.join(root_pth, 'audio', 'folder_count_detail'), np.array(folder_count_detail))
+    np.save(os.path.join(root_pth, "audio", "audio_data_for_tree"), np.array(audio_data))
+    np.save(os.path.join(root_pth, "audio", "audio_filling_type"), np.array(audio_filling_type))
+    np.save(os.path.join(root_pth, "audio", "audio_pour_shake"), np.array(audio_pour_shake))
+
 
     # pouring_or_shaking : 31796要素の0,1のnumpy配列
     # filling_type : 31796要素の0,1, 2, 3のnumpy配列
