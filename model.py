@@ -79,7 +79,8 @@ class Net(nn.Module):
         x = self.dropout2(x)
         x = self.fc3(x)
 
-        return self.softmax(x)   
+        # return self.softmax(x)
+        return x
 
     def before_lstm(self, x):
         x = F.relu(self.conv01(x))
