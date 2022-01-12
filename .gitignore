@@ -27,4 +27,3 @@ __pycache__/
 
 # .ipynb関係
 model_xgb.ipynb
-temp.ipynb
