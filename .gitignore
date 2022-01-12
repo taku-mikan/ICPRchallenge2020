@@ -24,3 +24,7 @@ __pycache__/
 # loss-image用
 *.png
 *.jpg
+
+# .ipynb関係
+model_xgb.ipynb
+temp.ipynb
