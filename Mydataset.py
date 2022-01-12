@@ -38,19 +38,19 @@ class MyDataset(torch.utils.data.Dataset):
             self.each_class_size.append(np.count_nonzero(self.label==i))
  
         # mfccフォルダのデータを一つずつ確認しmax. minを更新する(min maxが何を表すかは謎)
-        mx=0
-        mn=1000
+        mx = 0
+        mn = 1000
         for idx in range(self.label.shape[0]):
             data=np.load(os.path.join(self.audio_pth, "{0:06d}".format(idx+1) + '.npy'), allow_pickle=True)
             # data === 000001.npy 0000002.npy ... 
-            tmp_max=np.max(data)
-            tmp_min=np.min(data)
-            if mx<tmp_max:
-                mx=tmp_max
-            if mn>tmp_min:
-                mn=tmp_min
-        self.mn=mn
-        self.mx=mx
+            tmp_max = np.max(data)
+            tmp_min = np.min(data)
+            if mx < tmp_max:
+                mx = tmp_max
+            if mn > tmp_min:
+                mn = tmp_min
+        self.mn = mn
+        self.mx = mx
             
     def __len__(self):
         # self.label.shape = (31769, )
@@ -70,9 +70,9 @@ class MyDataset(torch.utils.data.Dataset):
             lbl = self.label[idx]
         data=np.load(os.path.join(self.audio_pth, "{0:06d}".format(idx+1) + '.npy'), allow_pickle=True)
         # 正規化
-        data= (data-self.mn)/(self.mx-self.mn)
-        data=data.transpose(2,0,1) # pytorchの入力に合わせているのかと
-        data=torch.from_numpy(data.astype(np.float32))
+        data = (data-self.mn)/(self.mx-self.mn)
+        data = data.transpose(2,0,1) # pytorchの入力に合わせているのかと
+        data = torch.from_numpy(data.astype(np.float32))
         return data , lbl
             
     def get_each_class_size(self):
