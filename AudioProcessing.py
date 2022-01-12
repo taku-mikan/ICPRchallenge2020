@@ -228,7 +228,7 @@ if __name__ == "__main__":
     np.save(os.path.join(root_pth, 'audio', 'folder_count_detail'), np.array(folder_count_detail))
 
     # pouring_or_shaking : 31796要素の0,1のnumpy配列
-    # filling_type : 31796要素の0,1のnumpy配列
+    # filling_type : 31796要素の0,1, 2, 3のnumpy配列
     # folder_count : [6134, 4534, 4386, 3994, 4342, 5382, 1100, 1001, 923]
     # folder_count_detail : (9, 84)次元のnumpy配列
 
