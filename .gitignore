@@ -26,4 +26,4 @@ __pycache__/
 *.jpg
 
 # .ipynb関係
-model_xgb.ipynb
+# model_xgb.ipynb
