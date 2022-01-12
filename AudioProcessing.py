@@ -174,7 +174,6 @@ if __name__ == "__main__":
         signal /= np.abs(signal).max() # 正規化
 
         # xgboost 用のデータ処理
-        audio_data_bf.append(signal.reshape(-1))
         audio_filling_type.append(filling_type)
         # container_id(folder_num)が1~6ならpouring, 7~9:shaking
         pouring = [1,2,3,4,5,6]
@@ -186,9 +185,9 @@ if __name__ == "__main__":
         else :
             print("no container id")
         
-        # 次元を揃えるために一番次元の長いやつを求めておく
-        if audio_max < signal.reshape(-1).shape[0]:
-            audio_max = signal.reshape(-1).shape[0]
+        # # 次元を揃えるために一番次元の長いやつを求めておく
+        # if audio_max < signal.reshape(-1).shape[0]:
+        #     audio_max = signal.reshape(-1).shape[0]
     
         ap = AudioProcessing(sample_rate,signal,nfilt=save_size)
         mfcc = ap.calc_MFCC()
@@ -199,8 +198,8 @@ if __name__ == "__main__":
             print("file {} is too short".format(fileidx))
         else:
             # このelse以下が何やってるのかよくわからん
-            f_step=int(mfcc.shape[1]*args.ratio_step) # 64 * 0.25 = 16
-            f_length=mfcc.shape[1] # 64
+            f_step = int(mfcc.shape[1]*args.ratio_step) # 64 * 0.25 = 16
+            f_length = mfcc.shape[1] # 64
 
             # np.ceil : 小数点の切り上げ
             save_mfcc_num = int(np.ceil(float(np.abs(mfcc_length - save_size)) / f_step)) #000000.wavでは13
@@ -234,16 +233,11 @@ if __name__ == "__main__":
                 # 000001.npy 000002.npy ... 031796.npy
                 
         pbar.update()
-    
-    # audioを一番長いものに揃えてから保存する
-    for audio in audio_data_bf:
-        audio_data_af.append(np.pad(audio, (0, audio_max), "constant"))
 
     np.save(os.path.join(root_pth, 'audio', 'pouring_or_shaking'), np.array(pouring_or_shaking_list) )
     np.save(os.path.join(root_pth, 'audio', 'filling_type'), np.array(filling_type_list))
     np.save(os.path.join(root_pth, 'audio', 'folder_count'), np.array(folder_count))
     np.save(os.path.join(root_pth, 'audio', 'folder_count_detail'), np.array(folder_count_detail))
-    np.save(os.path.join(root_pth, "audio", "audio_data_for_tree"), np.array(audio_data_af))
     np.save(os.path.join(root_pth, "audio", "audio_filling_type"), np.array(audio_filling_type))
     np.save(os.path.join(root_pth, "audio", "audio_pour_shake"), np.array(audio_pour_shake))
 
