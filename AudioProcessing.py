@@ -125,9 +125,12 @@ if __name__ == "__main__":
     folder_count = [0]*9
     folder_count_detail = [[] for _ in range(9)]
 
-    audio_data = [] # tree系用
+    # 以下xgboost用の変数
+    audio_data_bf = [] # padding前の音声でーた
+    audio_data_af = [] # padding後の音声データ
     audio_filling_type = [] # audio用のlabel
     audio_pour_shake = []
+    audio_max = 0
 
     pbar = tqdm(total=df_len)
     save_size = 64
@@ -158,28 +161,20 @@ if __name__ == "__main__":
         # 返り値 : sample_rate==int signal==numpy array (N_samples, N_channels)
         sample_rate, signal = scipy.io.wavfile.read(audio_path)
         # sample_rate:44100, signal:(N, 8)(numpy.ndarray)
-        
-        # ここに他の前処理を加えればいいんじゃないかな
-        # trimming
-        # if args.trimming:
-        #     if folder_num == 0:
-        #         signal = signal.astype("float32")
-        #     else :
-        #         # numpyのcast 
-        #         # https://note.nkmk.me/python-numpy-dtype-astype/
-        #         signal = signal.astype("float32")
-        #         # トリミング手法
-        #         # https://librosa.org/doc/main/generated/librosa.effects.trim.html
-        #         signal, _ = librosa.effects.trim(signal, top_db=threshold)
 
+        # numpyのcast 
+        # https://note.nkmk.me/python-numpy-dtype-astype/
         signal = signal.astype("float32")
+        # トリミング手法
+        # https://librosa.org/doc/main/generated/librosa.effects.trim.html
         if args.trimming:
             if filling_type in [1,2]:
                 signal, _ = librosa.effects.trim(signal, top_db=threshold)
                 # signal = signal.astype("int16")
         signal /= np.abs(signal).max() # 正規化
 
-        audio_data.append(signal)
+        # xgboost 用のデータ処理
+        audio_data_bf.append(signal.reshape(-1))
         audio_filling_type.append(filling_type)
         # container_id(folder_num)が1~6ならpouring, 7~9:shaking
         pouring = [1,2,3,4,5,6]
@@ -190,11 +185,15 @@ if __name__ == "__main__":
             audio_pour_shake.append(0)
         else :
             print("no container id")
+        
+        # 次元を揃えるために一番次元の長いやつを求めておく
+        if audio_max < signal.reshape(-1).shape[0]:
+            audio_max = signal.reshape(-1).shape[0]
     
         ap = AudioProcessing(sample_rate,signal,nfilt=save_size)
         mfcc = ap.calc_MFCC()
         # mfcc : (N, 64, 8)(numpy.ndarray)
-        mfcc_length=mfcc.shape[0] # N
+        mfcc_length = mfcc.shape[0] # N
 
         if mfcc_length < save_size:
             print("file {} is too short".format(fileidx))
@@ -204,7 +203,7 @@ if __name__ == "__main__":
             f_length=mfcc.shape[1] # 64
 
             # np.ceil : 小数点の切り上げ
-            save_mfcc_num=int(np.ceil(float(np.abs(mfcc_length - save_size)) / f_step)) #000000.wavでは13
+            save_mfcc_num = int(np.ceil(float(np.abs(mfcc_length - save_size)) / f_step)) #000000.wavでは13
             folder_count_detail[folder_num-1].append(save_mfcc_num)
 
             for i in range(save_mfcc_num):
@@ -235,12 +234,16 @@ if __name__ == "__main__":
                 # 000001.npy 000002.npy ... 031796.npy
                 
         pbar.update()
+    
+    # audioを一番長いものに揃えてから保存する
+    for audio in audio_data_bf:
+        audio_data_af.append(np.pad(audio, (0, audio_max), "constant"))
 
     np.save(os.path.join(root_pth, 'audio', 'pouring_or_shaking'), np.array(pouring_or_shaking_list) )
     np.save(os.path.join(root_pth, 'audio', 'filling_type'), np.array(filling_type_list))
     np.save(os.path.join(root_pth, 'audio', 'folder_count'), np.array(folder_count))
     np.save(os.path.join(root_pth, 'audio', 'folder_count_detail'), np.array(folder_count_detail))
-    np.save(os.path.join(root_pth, "audio", "audio_data_for_tree"), np.array(audio_data))
+    np.save(os.path.join(root_pth, "audio", "audio_data_for_tree"), np.array(audio_data_af))
     np.save(os.path.join(root_pth, "audio", "audio_filling_type"), np.array(audio_filling_type))
     np.save(os.path.join(root_pth, "audio", "audio_pour_shake"), np.array(audio_pour_shake))
 
