@@ -242,6 +242,8 @@ if __name__ == "__main__":
 
             loss.backward() # backpropagation
             optimizer.step()
+        # ここまではNNでの学習
+
 
         if args.loss_image:
             train_loss_list.append(loss_train/len(train_loader))
