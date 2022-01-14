@@ -57,19 +57,19 @@ class Net(nn.Module):
         x = self.pool2(self.bn2(x))
 
         x = F.relu(self.conv05(x))
-        x = F.relu(self.conv06(x))
+        #x = F.relu(self.conv06(x))
         x = F.relu(self.conv07(x))
         x = self.pool3(self.bn3(x))
 
         x = F.relu(self.conv08(x))
-        x = F.relu(self.conv09(x))
+        #x = F.relu(self.conv09(x))
         x = F.relu(self.conv10(x))
         x = self.pool4(self.bn4(x))
 
-        # x = F.relu(self.conv11(x))
-        # x = F.relu(self.conv12(x))
-        # x = F.relu(self.conv13(x))
-        # x = self.pool5(self.bn5(x))
+        #x = F.relu(self.conv11(x))
+        #x = F.relu(self.conv12(x))
+        x = F.relu(self.conv13(x))
+        x = self.pool5(self.bn5(x))
 
 
         x = x.view(-1, 256 * 2 * 2)
