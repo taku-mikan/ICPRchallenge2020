@@ -105,36 +105,36 @@ if __name__ == "__main__":
     folder_count = np.load(os.path.join(root_dir, 'mov_count.npy')).tolist()
 
     # 去年のtrainデータとvalidationデータの分割
-    # if args.train_type == 'part' and args.val != -1:
-    #     l = list(range(0, n_samples))
-    #     total_num = 0
-    #     for i, num in enumerate(folder_count):
-    #         if i != args.val-1:
-    #             train_indices += l[total_num:total_num+num]
-    #         else:
-    #             val_indices += l[total_num:total_num+num]
-    #         total_num += num
-    # else:
-    #     train_indices = list(range(0, n_samples))  
-    #     val_indices = (np.random.choice(train_indices, 100, replace=False)).tolist()
-
-    # 自作データの分割コード : train:validation=80:20
-    if args.train_type == "part" :
+    if args.train_type == 'part' and args.val != -1:
+        l = list(range(0, n_samples))
         total_num = 0
-        for num in folder_count:
-            # folder_count : [6134, 4534, 4386, 3994, 4342, 5382, 1100, 1001, 923]
-            fol_indices = list(range(total_num, total_num+num))
-            fol_indices = random.sample(fol_indices, num)
-            # train : validation = 80 : 20
-            train_size = int(num * 0.8)
-
-            train_indices += fol_indices[0:train_size]
-            val_indices += fol_indices[train_size:]
-
+        for i, num in enumerate(folder_count):
+            if i != args.val-1:
+                train_indices += l[total_num:total_num+num]
+            else:
+                val_indices += l[total_num:total_num+num]
             total_num += num
     else:
-        train_indices = list(range(0, n_samples))
-        val_indices = (np.random.choice(train_indices, 1000, replace=False)).tolist()
+        train_indices = list(range(0, n_samples))  
+        val_indices = (np.random.choice(train_indices, 100, replace=False)).tolist()
+
+    # 自作データの分割コード : train:validation=80:20
+    # if args.train_type == "part" :
+    #     total_num = 0
+    #     for num in folder_count:
+    #         # folder_count : [6134, 4534, 4386, 3994, 4342, 5382, 1100, 1001, 923]
+    #         fol_indices = list(range(total_num, total_num+num))
+    #         fol_indices = random.sample(fol_indices, num)
+    #         # train : validation = 80 : 20
+    #         train_size = int(num * 0.8)
+
+    #         train_indices += fol_indices[0:train_size]
+    #         val_indices += fol_indices[train_size:]
+
+    #         total_num += num
+    # else:
+    #     train_indices = list(range(0, n_samples))
+    #     val_indices = (np.random.choice(train_indices, 1000, replace=False)).tolist()
     
     train_dataset = Subset(mydataset, train_indices)
     val_dataset =  Subset(mydataset, val_indices)
