@@ -159,8 +159,11 @@ if __name__ == "__main__":
             # folder_count : [6134, 4534, 4386, 3994, 4342, 5382, 1100, 1001, 923]
             fol_indices = list(range(total_num, total_num+num))
             fol_indices = random.sample(fol_indices, num)
-            # train : validation = 80 : 20
-            train_size = int(num * 0.8)
+            # # train : validation = 80 : 20
+            # train_size = int(num * 0.8)
+            
+            # train : validation
+            train_size = int(num * 0.9)
 
             train_indices += fol_indices[0:train_size]
             val_indices += fol_indices[train_size:]
